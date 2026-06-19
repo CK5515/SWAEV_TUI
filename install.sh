@@ -2,12 +2,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
 #  SWAEV GoldBEAM TUI — one-command installer
 #
-#  curl -fsSL https://raw.githubusercontent.com/swaev/tui/main/install.sh | bash
+#  curl -fsSL https://raw.githubusercontent.com/CK5515/SWAEV_TUI/main/install.sh | bash
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 IFS=$'\n\t'
 
-# ── Config (update GITHUB_RAW when the repo is live) ─────────────────────────
+# ── Config ────────────────────────────────────────────────────────────────────
 GITHUB_RAW="https://raw.githubusercontent.com/CK5515/SWAEV_TUI/main"
 SWAEV_HOME="${HOME}/.swaev"
 BIN_DIR="${HOME}/.local/bin"
@@ -50,9 +50,13 @@ else
 fi
 
 # ── 4. Dependencies ───────────────────────────────────────────────────────────
+# pip ≥ 23.0 on Debian/Ubuntu enforces externally-managed-environment and needs
+# --break-system-packages.  Older pip doesn't know the flag, so try it first and
+# fall back without it — covers all distros and Python versions cleanly.
 _step "Installing Python dependencies..."
-python3 -m pip install --quiet --upgrade rich requests \
-  || _die "pip install failed. Try manually: pip3 install rich requests"
+python3 -m pip install --quiet --upgrade --break-system-packages rich requests 2>/dev/null \
+  || python3 -m pip install --quiet --upgrade rich requests \
+  || _die "pip install failed. Try manually: pip3 install --break-system-packages rich requests"
 _ok "rich + requests installed"
 
 # ── 5. Write the swaev wrapper ────────────────────────────────────────────────
