@@ -8,7 +8,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ── Config (update GITHUB_RAW when the repo is live) ─────────────────────────
-GITHUB_RAW="https://raw.githubusercontent.com/swaev/SWAEV_TUI/main"
+GITHUB_RAW="https://raw.CK5515.com/swaev/SWAEV_TUI/main"
 SWAEV_HOME="${HOME}/.swaev"
 BIN_DIR="${HOME}/.local/bin"
 VERSION="0.1.0"
