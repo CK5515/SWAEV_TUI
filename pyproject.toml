@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swaev"
+version = "0.1.0"
+description = "GoldBEAM TUI — O(N) DNA-to-3D chromatin contact map prediction"
+readme = "README.md"
+license = { text = "Proprietary" }
+authors = [{ name = "SWAEV Genomics", email = "cyprian@swaev.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "rich>=13.0.0",
+    "requests>=2.28.0",
+]
+keywords = ["genomics", "HiC", "chromatin", "TAD", "contact-map", "bioinformatics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://swaev.com"
+Documentation = "https://swaev.com/#portal"
+Repository = "https://github.com/swaev/tui"
+
+[project.scripts]
+# After `pip install swaev`, this puts `swaev` on the user's PATH automatically.
+swaev = "swaev.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["swaev*"]
+
+[tool.setuptools.package-data]
+# client.py lives inside the swaev/ package so it's included in the wheel.
+swaev = ["client.py"]
