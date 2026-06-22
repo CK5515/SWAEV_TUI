@@ -1527,9 +1527,9 @@ def load_config() -> Dict[str, Any]:
         except Exception:
             pass
 
-    # Auto-migration: replace stale Cloud Run URLs with the stable custom domain
+    # Auto-migration: replace stale/dev URLs with the stable custom domain
     _saved_url = config.get("api_url", "")
-    if "a.run.app" in _saved_url or not _saved_url:
+    if not _saved_url or "a.run.app" in _saved_url or "127.0.0.1" in _saved_url or "localhost" in _saved_url:
         config["api_url"] = DEFAULT_API_URL
         try:
             save_config(config)
