@@ -38,6 +38,8 @@ console = Console()
 # Configuration Path
 CONFIG_PATH = os.path.expanduser("~/.goldbeam.json")
 DEFAULT_API_URL = "https://gateway.swaev.com"
+GITHUB_RAW = "https://raw.githubusercontent.com/CK5515/SWAEV_TUI/main"
+__version__ = "2026-06-22"
 
 # -----------------------------------------------------------------------------
 # Color Themes & Localization Configuration
@@ -6878,7 +6880,33 @@ def render_heatmap(matrix: List[List[float]]) -> None:
 # -----------------------------------------------------------------------------
 # Main TUI Loop
 # -----------------------------------------------------------------------------
+def check_and_apply_update() -> None:
+    """Fetch version.txt from GitHub; if newer, replace this script and exec-restart."""
+    try:
+        resp = requests.get(f"{GITHUB_RAW}/version.txt", timeout=3)
+        if resp.status_code != 200:
+            return
+        latest = resp.text.strip()
+        if latest <= __version__:
+            return
+        console.print(f"[dim]» Updating GoldBEAM TUI {__version__} → {latest}...[/dim]")
+        dl = requests.get(f"{GITHUB_RAW}/client.py", timeout=20)
+        if dl.status_code != 200:
+            return
+        self_path = os.path.abspath(__file__)
+        tmp_path = self_path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as fh:
+            fh.write(dl.text)
+        os.replace(tmp_path, self_path)
+        console.print(f"[bold green]✓ Updated to {latest}. Restarting...[/bold green]")
+        time.sleep(0.8)
+        os.execv(sys.executable, [sys.executable, self_path] + sys.argv[1:])
+    except Exception:
+        pass
+
+
 def run_tui():
+    check_and_apply_update()
     config = load_config()
     
     # Check if first launch onboarding is required
