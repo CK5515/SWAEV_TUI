@@ -37,7 +37,7 @@ console = Console()
 
 # Configuration Path
 CONFIG_PATH = os.path.expanduser("~/.goldbeam.json")
-DEFAULT_API_URL = "https://gateway-rt-fubp45pneq-ew.a.run.app"
+DEFAULT_API_URL = "https://gateway.swaev.com"
 
 # -----------------------------------------------------------------------------
 # Color Themes & Localization Configuration
@@ -1522,6 +1522,15 @@ def load_config() -> Dict[str, Any]:
     # Auto-migration of reports_dir if it is "."
     if config.get("reports_dir") == ".":
         config["reports_dir"] = "reverse_engineering_reports"
+        try:
+            save_config(config)
+        except Exception:
+            pass
+
+    # Auto-migration: replace stale Cloud Run URLs with the stable custom domain
+    _saved_url = config.get("api_url", "")
+    if "a.run.app" in _saved_url or not _saved_url:
+        config["api_url"] = DEFAULT_API_URL
         try:
             save_config(config)
         except Exception:
