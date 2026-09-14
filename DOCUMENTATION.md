@@ -359,7 +359,7 @@ waits for commands at its own `» interpret>` prompt. Type a command and press `
 | `1` – `7` | Switch tab |
 | `snp <pos> <REF>><ALT>` / `del <start> <end>` / `reset` | Variant modeller (jumps to tab 6) |
 | `e1` `e2` `e3` `e4` / `ea` | Export (jumps to tab 7) |
-| `?` / `help` / `h` | Help for the current tab |
+| `?` / `help` | Help for the current tab |
 | `q` / `quit` / `exit` / `back` / empty line | Return to the Flight Simulator |
 
 | Tab | Name | What it shows | Exported by |
