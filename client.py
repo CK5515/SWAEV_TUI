@@ -3013,7 +3013,7 @@ def run_interpretability_suite(
 
         lc = choice.lower()
 
-        if lc in ("?", "help", "h"):
+        if lc in ("?", "help"):
             run_suite_help(current_tab)
             continue
 
