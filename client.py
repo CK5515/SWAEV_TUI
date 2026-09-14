@@ -3116,9 +3116,10 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
              "The stronger the triangle, the more self-contained the domain. "
              "Stripes extending off-diagonal indicate loop extrusion activity."),
             ("Boundary annotations",
-             "The right-hand table lists predicted TAD boundaries. "
-             "Insulation Score shows the local contact minimum (lower = stronger boundary). "
-             "Boundary Strength is the depth of the insulation valley normalised to [0, 1]."),
+             "The boundary panel (right of the map on wide terminals, below it on narrow ones) "
+             "lists each predicted TAD boundary: its bin, its strength (str) and its approximate "
+             "position in kb. Strength is the depth of the insulation valley normalised to [0, 1] "
+             "— higher = stronger boundary. Tab 3 shows the underlying insulation score."),
             ("Biological significance",
              "Loss of a TAD boundary can bring an oncogene into contact with an active "
              "enhancer — this is the CTCF-boundary disruption mechanism seen in many cancers. "
@@ -3140,15 +3141,18 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
              "2. Pearson-correlate each bin's contact profile across all other bins. "
              "3. Extract the first eigenvector of the correlation matrix via power iteration. "
              "4. Sign: positive eigenvector bins → A; negative → B. "
-             "Sign is ambiguous (eigenvectors can be negated) — GoldBEAM uses the convention "
-             "that the higher-GC half is A."),
+             "An eigenvector's sign is arbitrary and no GC-based orientation is applied yet, "
+             "so A and B can come out swapped for a given locus — check against GC content "
+             "or gene density before interpreting."),
             ("Reading the display",
-             "[green]Green bars[/green] = A compartment (active). "
-             "[blue]Blue bars[/blue] = B compartment (inactive). "
-             "Bar height = eigenvector magnitude (strength of compartment identity). "
-             "Sharp sign changes mark compartment transitions."),
+             "The top strip is the A/B call along the locus, left to right. "
+             "Below it, one row per bin (or per averaged group of bins on short terminals): "
+             "[chartreuse1]green bar to the right[/chartreuse1] = A compartment (active), "
+             "[#0ea5e9]blue bar to the left[/#0ea5e9] = B compartment (inactive). "
+             "Bar length = eigenvector magnitude (strength of compartment identity). "
+             "Sign changes between rows mark compartment transitions."),
             ("Export",
-             "Tab 7 → e2 exports a BED file with A/B assignments and eigenvector values "
+             "Type e2 (from any tab) to export a BED file with A/B assignments and eigenvector values "
              "for downstream analysis in IGV, UCSC Browser, or deeptools."),
         ],
     },
@@ -3163,14 +3167,15 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
              "they are 'insulated' from cross-domain interactions. "
              "A local minimum in the insulation score indicates a boundary."),
             ("Reading the chart",
-             "X-axis = genomic bins left to right. "
-             "Y-axis = insulation score (0 = strongest boundary; 1 = no insulation). "
-             "Yellow tick marks (▲) = called TAD boundaries. "
-             "Wider valleys = more prominent, biologically stronger boundaries."),
+             "One row per bin (or per averaged group of bins on short terminals), top to "
+             "bottom along the locus; the left-hand number is the bin index. "
+             "Bar length = insulation score (0 = strongest boundary; 1 = no insulation). "
+             "[red]◄[/red] = the row contains a called TAD boundary. "
+             "Deeper, wider valleys = more prominent, biologically stronger boundaries."),
             ("Limitations",
-             "Resolution is limited by bin size. At 4 kb bins (default) the score is "
-             "sensitive to individual CTCF binding. At 40 kb it reflects domain-level "
-             "architecture. GoldBEAM's bin count is determined by the model's output grid."),
+             "Resolution is limited by bin size. The predicted map has 40 bins, so each bin "
+             "covers the sequence length ÷ 40 (25 kb for a 1 Mb region). Small bins are "
+             "sensitive to individual CTCF sites; large bins reflect domain-level architecture."),
         ],
     },
     "4": {
@@ -3190,10 +3195,11 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
             ("Reading the table",
              "Rank: ordered by contact score (1 = strongest). "
              "Bin 1 / Bin 2: zero-indexed genomic bin coordinates. "
-             "Distance: separation in bins (multiply by bin_size_bp for base pairs). "
-             "Contact Score: raw contact frequency in the predicted map."),
+             "Distance: separation in bins (× sequence length ÷ 40 for base pairs). "
+             "Contact Score: raw contact frequency in the predicted map. "
+             "Est. Locus (wide terminals): approximate kb span between the two anchors."),
             ("Export",
-             "Tab 7 → e3 exports a TSV with genomic coordinates. "
+             "Type e3 (from any tab) to export a TSV with anchor positions in bp. "
              "Compatible with CTCF ChIP-seq peak overlap analysis in bedtools."),
         ],
     },
@@ -3212,9 +3218,10 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
              "chromatin. After training, real gradient-based attribution (integrated gradients "
              "or GradCAM) will be wired through generate_simulated_saliency()."),
             ("Reading the chart",
-             "X-axis = genomic bins. Y-axis = attribution score. "
-             "Gold/yellow markers (◆) = top-5 highest-attribution bins. "
-             "These are the sequence windows most influential for the predicted structure."),
+             "One row per bin (or per averaged group of bins on short terminals), top to "
+             "bottom along the locus. Bar length = attribution score. "
+             "[yellow]◄[/yellow] = the row contains one of the top-5 highest-attribution bins — "
+             "the sequence windows most influential for the predicted structure."),
             ("Use cases",
              "Identify transcription factor binding sites driving domain organisation. "
              "Design CRISPR experiments at high-saliency positions. "
@@ -3230,12 +3237,14 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
              "and visualise the change as a ΔContact heatmap. "
              "This is the core clinical/research workflow: given a patient VCF variant, "
              "does it disrupt a TAD boundary or create a neo-loop?"),
-            ("Commands",
-             "snp <pos> <REF>><ALT>   — point mutation at base position (1-indexed)\n"
+            ("Commands  (type at the » interpret> prompt, then ⏎)",
+             "snp <pos> <REF>><ALT>   — point mutation at a base position\n"
              "  Example:  snp 500000 G>A\n\n"
              "del <start> <end>       — deletion from start to end bp\n"
              "  Example:  del 450000 520000\n\n"
-             "reset                   — restore wildtype"),
+             "reset                   — restore wildtype\n\n"
+             "Positions are 0-based offsets within the loaded sequence, not chromosome "
+             "coordinates. Each command replaces the previous variant — they don't stack."),
             ("Reading the ΔContact map",
              "[red]Red cells[/red] = contact gain (the variant creates new interactions). "
              "[blue]Blue cells[/blue] = contact loss (the variant disrupts existing interactions). "
@@ -3260,8 +3269,9 @@ _SUITE_TAB_HELP: Dict[str, Any] = {
              "ea  →  All four formats at once"),
             ("File locations",
              "All exports land in ~/goldbeam_exports/ with timestamped filenames. "
-             "Each file includes a provenance header documenting the locus, timestamp, "
-             "GoldBEAM version, and a SIMULATED stamp until the model is trained."),
+             "Each file starts with a provenance header: the provenance string, the tool, "
+             "the generation timestamp, and a SIMULATED warning until the model is trained. "
+             "Suite exports currently use chrUnknown with positions starting at 0."),
             ("BED format (e1, e2)",
              "chrom  chromStart  chromEnd  name  score  strand\n"
              "Compatible with UCSC Browser, IGV, bedtools, deeptools."),
@@ -3285,7 +3295,7 @@ def _run_scroll_view(
 
     build(width) returns the renderables for a given content width; it is
     re-run whenever the terminal width changes, so text re-wraps on resize.
-    Keys: ↑↓ / j k line · PgUp PgDn / Space page · Home End · Enter / Esc / q close.
+    Keys: ↑↓ / j k line · PgUp PgDn / Space page · Home End · Enter / Esc / q / ? close.
     """
     if not sys.stdin.isatty():
         console.print(Panel(Group(*build(max(10, console.size.width - 6))),
@@ -3342,7 +3352,7 @@ def _run_scroll_view(
                 if not ready:
                     continue
                 ch = os.read(fd, 1)
-                if ch in (b"\r", b"\n", b"q", b"Q", b"\x03", b"\x04"):
+                if ch in (b"\r", b"\n", b"q", b"Q", b"?", b"\x03", b"\x04"):
                     break
                 if ch == b"\x1b":
                     seq = b""
@@ -3397,6 +3407,25 @@ def run_suite_help(current_tab: str) -> None:
         ))
         lines.append(Rule(style="chartreuse1"))
 
+        # ── Prompt commands (the suite is type-then-Enter, unlike the simulator) ─
+        lines.append(Text.from_markup(
+            "[bold yellow]USING THE PROMPT[/bold yellow]  "
+            "[dim]type a command at » interpret> and press ⏎ — single keys do nothing on their own[/dim]"
+        ))
+        cmd_tbl = Table(show_header=False, box=None, padding=(0, 3, 0, 2))
+        cmd_tbl.add_column(style="bold chartreuse1", no_wrap=True)
+        cmd_tbl.add_column(style="dim")
+        cmd_tbl.add_row("1 – 7", "Switch tab")
+        cmd_tbl.add_row("snp <pos> <REF>><ALT>", "Point mutation → tab 6")
+        cmd_tbl.add_row("del <start> <end>", "Deletion → tab 6")
+        cmd_tbl.add_row("reset", "Restore wildtype")
+        cmd_tbl.add_row("e1 – e4 · ea", "Export one track / all → tab 7")
+        cmd_tbl.add_row("? · help", "This help")
+        cmd_tbl.add_row("q · empty ⏎", "Back to the Flight Simulator")
+        lines.append(cmd_tbl)
+        lines.append(Text(""))
+        lines.append(Rule(style="dim"))
+
         for sec_title, sec_body in sections:
             lines.append(Text.from_markup(f"[bold yellow]{sec_title}[/bold yellow]"))
             lines.extend(_help_body(sec_body, 2))
@@ -3444,23 +3473,17 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "due to methylation-driven depletion. "
              "Complexity — Shannon entropy of 3-mer distribution (Wootton–Federhen, 1993)."),
         ],
+        "export": "Per-bin saliency track (.bedGraph; currently a GC-content proxy).",
     },
     "2": {
         "icon": "⌦",
         "name": "Virtual Deletion Probe",
         "tagline": "In silico mutagenesis · SDI readout · ΔContact map",
         "sections": [
-            ("ENTERING SIMULATION MODE",
-             "Press M to toggle OBSERVATION → SIMULATION. A red command bar appears "
-             "at the bottom of the HUD. Type a command and press Enter to apply it."),
-            ("COMMANDS",
-             "snp <pos> <REF>><ALT>   point mutation (1-indexed base position)\n"
-             "  Example:  snp 500000 G>A\n"
-             "\n"
-             "del <start> <end>       deletion from start bp to end bp\n"
-             "  Example:  del 450000 520000\n"
-             "\n"
-             "reset                   restore wildtype baseline"),
+            ("APPLYING A VARIANT",
+             "Run snp or del in Simulation mode (see SIMULATION MODE below) from any tool. "
+             "This tool shows wildtype and mutant side by side with the SDI readout; "
+             "the view jumps to [8] after each command, so press 2 to return here."),
             ("SDI — STRUCTURAL DISRUPTION INDEX",
              "SDI = mean absolute ΔContact across the full predicted matrix. "
              "SDI ≥ 0.15 = structurally significant (TAD boundary disruption threshold). "
@@ -3472,10 +3495,11 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "Diagonal red/blue striping = TAD boundary shift. "
              "Off-diagonal red dot = neo-loop formation event."),
             ("CTCF SCANNER SHORTCUT",
-             "Press C to open the CTCF Motif Scanner overlay. Navigate with ↑↓ "
-             "to an anchor of interest, then press Enter — it pre-fills this tool's "
-             "deletion sandbox with that anchor's coordinates automatically."),
+             "Press C to open the CTCF Motif Scanner overlay. Move with ↑↓ to an anchor of "
+             "interest and press Enter: a deletion covering that motif is applied immediately, "
+             "Simulation mode is switched on, and this tool opens with the result."),
         ],
+        "export": "Nothing to export from this tool. Tools [1] [3] [6] export saliency, [4] and [7] export boundaries / anchors, and the Interpretability Suite (I) exports everything.",
     },
     "3": {
         "icon": "⬡",
@@ -3498,6 +3522,7 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "Bins with O/E > 0.6 are flagged ▲ as CpG island candidates — "
              "these are typically gene promoters and CTCF binding sites."),
         ],
+        "export": "Per-bin saliency track (.bedGraph; currently a GC-content proxy).",
     },
     "4": {
         "icon": "≋",
@@ -3516,9 +3541,9 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
             ("BOUNDARY TABLE",
              "Ranks all called boundaries by insulation valley depth. "
              "Insulation Score = raw minimum value at the boundary bin. "
-             "Boundary Strength = valley depth normalised to [0, 1]. "
-             "Press E to export as a .BED file for IGV or UCSC Browser."),
+             "Boundary Strength = valley depth normalised to [0, 1]."),
         ],
+        "export": "TAD boundaries (.bed) — loads in IGV or the UCSC Browser.",
     },
     "5": {
         "icon": "⊞",
@@ -3543,6 +3568,7 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "Flat decay = matrix artefact. Sharp early drop = strong domain insulation. "
              "After training this will reflect true GoldBEAM model predictions."),
         ],
+        "export": "Nothing to export from this tool. Tools [1] [3] [6] export saliency, [4] and [7] export boundaries / anchors, and the Interpretability Suite (I) exports everything.",
     },
     "6": {
         "icon": "◍",
@@ -3566,6 +3592,7 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "centromeric-like sequence. The model's attention will focus on the "
              "flanking unique sequence in these regions rather than the repeat itself."),
         ],
+        "export": "Per-bin saliency track (.bedGraph; currently a GC-content proxy).",
     },
     "7": {
         "icon": "⊡",
@@ -3573,20 +3600,19 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
         "tagline": "CTCF density profile + predicted loop anchors",
         "sections": [
             ("CTCF DENSITY PROFILE",
-             "Counts of CTCF core motif hits (CCGCGNGGG) per genomic bin. "
-             "Peaks mark likely insulator positions. Top-5 density peaks are flagged ▲. "
-             "Press C to open the full CTCF Motif Scanner overlay — it scans all six "
-             "motif classes with genomic coordinates and one-click sandbox integration."),
+             "Hits per genomic bin of a simplified GC-rich CTCF core consensus "
+             "(CCGCGNGGG, N = any base). Peaks mark likely insulator positions; "
+             "the top-5 density peaks are flagged ▲. This is a quick density heuristic — "
+             "the C Motif Scanner is a separate search for six exact motifs (including the "
+             "JASPAR-derived CTCF core CCCTCCTGG) with genomic coordinates."),
             ("LOOP ANCHOR PAIRS",
-             "Top 20 off-diagonal contact scores from the predicted matrix, "
-             "requiring a minimum 6-bin separation to exclude diagonal noise. "
+             "Top 20 off-diagonal contact scores from the predicted matrix (as many as fit "
+             "are listed), requiring a minimum 6-bin separation to exclude diagonal noise. "
              "These are the highest-confidence predicted chromatin loop interactions. "
              "After model training, these will reflect true cohesin-extruded loops."),
-            ("EXPORT",
-             "Press E to export the anchor table as a .tsv file with genomic "
-             "coordinates. Use bedtools intersect against CTCF ChIP-seq peaks "
-             "to validate predicted loop anchors against experimental data."),
         ],
+        "export": "TAD boundaries (.bed) and loop anchors (.tsv). Use bedtools intersect against "
+                  "CTCF ChIP-seq peaks to validate predicted anchors.",
     },
     "8": {
         "icon": "⬛",
@@ -3596,21 +3622,21 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
             ("CONTACT MATRIX",
              "Full 40×40 predicted contact frequency map rendered at 2× vertical "
              "resolution using Unicode half-block characters (▄). "
-             "Colour scale: purple → yellow → white = low → high contact frequency. "
+             "Colour scale (see the legend): navy → blue → cyan → magenta → gold = "
+             "low → high contact frequency. "
              "Bright triangular blocks along the diagonal = TADs. "
              "Off-diagonal bright spots = chromatin loops."),
             ("DELTA OVERLAY  (Simulation Mode)",
-             "Switch to SIMULATION mode (press M) and apply a variant using tool [2]. "
-             "This panel overlays the ΔContact map: red = contact gain, blue = contact loss. "
+             "Switch to SIMULATION mode (press M) and apply a variant with snp or del from any "
+             "tool, or with Enter in the C Motif Scanner. "
+             "This panel then overlays the ΔContact map: red = contact gain, blue = contact loss. "
              "The SDI score quantifies total structural perturbation. "
              "Panel border turns red when a variant is active."),
             ("CELL-LINE CONTEXT  (⇥ Tab)",
-             "Press Tab to cycle the chromatin context applied to the contact matrix:\n"
-             "  GM12878 — lymphoblastoid B-cell · sharp TAD boundaries · ENCODE tier 1\n"
-             "  H1-hESC — embryonic stem cell · diffuse open chromatin\n"
-             "  IMR90   — lung fibroblast · intermediate compaction\n"
-             "The CELLULAR CONTEXT line in the header updates to reflect the active context."),
+             "Tab re-biases this matrix for another cell line (see CELL-LINE SHIFTER below); "
+             "the CELLULAR CONTEXT line in the header shows the active one."),
         ],
+        "export": "Nothing to export from this tool. Tools [1] [3] [6] export saliency, [4] and [7] export boundaries / anchors, and the Interpretability Suite (I) exports everything.",
     },
     "9": {
         "icon": "⬡",
@@ -3640,113 +3666,139 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "on each head. Simulated outputs will be replaced by live inference once "
              "weights are trained on ENCODE Hi-C datasets."),
         ],
+        "export": "Nothing to export from this tool. Tools [1] [3] [6] export saliency, [4] and [7] export boundaries / anchors, and the Interpretability Suite (I) exports everything.",
     },
 }
 
 
 def run_fs_help(current_tool: str) -> None:
-    """Full-screen contextual help for the Flight Simulator (all 9 tools + new features)."""
+    """Full-screen contextual help for the Flight Simulator: keys, active tool, modes, overlays."""
     info = _FS_TOOL_HELP.get(current_tool, {})
     icon = info.get("icon", "◈")
     name = info.get("name", f"Tool {current_tool}")
     tagline = info.get("tagline", "")
     sections = info.get("sections", [])
+    export_note = info.get("export", "")
 
     def _build(width: int) -> List[Any]:
         lines: List[Any] = []
+        heading = t_style("primary_bold")
+        rule = f"dim {t_style('border')}"
 
-        # ── Active tool header ────────────────────────────────────────────────
+        # ── Keyboard reference, grouped by purpose ────────────────────────────
+        key_groups = [
+            ("NAVIGATE", [
+                ("1 – 9", "Switch tool"),
+                ("⇥ Tab", "Cycle cell-line context"),
+                ("Esc",   "Close overlay · cancel input"),
+            ]),
+            ("LOAD DATA", [
+                ("L", "Load FASTA  (/ types a path)"),
+                ("G", "Fetch a UCSC region"),
+                ("H", "Session history  (x removes)"),
+            ]),
+            ("ANALYSE", [
+                ("M", "Toggle Observation / Simulation"),
+                ("C", "CTCF motif scanner"),
+                ("E", "Export this tool's output"),
+                ("I", "Interpretability Suite"),
+            ]),
+            ("GENERAL", [
+                ("?", "This help  (? or ⏎ closes)"),
+                ("S", "Settings  (Observation mode only)"),
+                ("Q", "Quit  (Ctrl-C also works)"),
+            ]),
+        ]
+
+        def _key_group(title: str, pairs: List[Tuple[str, str]]) -> Group:
+            tbl = Table(show_header=False, box=None, padding=(0, 2, 0, 2))
+            tbl.add_column(style=heading, no_wrap=True, width=6)
+            tbl.add_column(style="dim")
+            for key, desc in pairs:
+                tbl.add_row(key, desc)
+            return Group(Text(title, style=heading), tbl)
+
+        lines.append(Text("KEYS", style=heading))
+        if width >= 80:
+            kb_grid = Table.grid(expand=True, padding=(0, 2))
+            kb_grid.add_column(ratio=1)
+            kb_grid.add_column(ratio=1)
+            for i in range(0, len(key_groups), 2):
+                kb_grid.add_row(_key_group(*key_groups[i]), _key_group(*key_groups[i + 1]))
+                if i + 2 < len(key_groups):
+                    kb_grid.add_row(Text(""), Text(""))
+            lines.append(kb_grid)
+        else:
+            for group_title, pairs in key_groups:
+                lines.append(_key_group(group_title, pairs))
+        lines.append(Text(""))
+        lines.append(Rule(style=rule))
+
+        # ── Active tool ───────────────────────────────────────────────────────
         title_row = Text()
         title_row.append(f" {icon} [{current_tool}] {name} ", style=f"bold #000000 on {t_style('primary')}")
         title_row.append(f"  {tagline}", style="dim")
         lines.append(title_row)
-        lines.append(Rule(style=t_style("border")))
         lines.append(Text(""))
 
-        # ── Tool-specific sections ────────────────────────────────────────────
         for sec_title, sec_body in sections:
-            lines.append(Text(sec_title, style=t_style("primary_bold")))
+            lines.append(Text(sec_title, style=heading))
             lines.extend(_help_body(sec_body, 2))
             lines.append(Text(""))
-
-        lines.append(Rule(style=f"dim {t_style('border')}"))
-        lines.append(Text(""))
-
-        # ── New features ──────────────────────────────────────────────────────
-        lines.append(Text("NEW FEATURES", style=t_style("primary_bold")))
-        lines.append(Text(""))
-        new_features = [
-            ("G  LIVE UCSC FETCHER",
-             "Press G · type a UCSC coordinate · press Enter to fetch in the background.\n"
-             "Format:  chr7:114200000-115240000  or  chr1:1000000-2000000\n"
-             "The sequence loads from UCSC hg38. Fallback: synthetic sequence if offline.\n"
-             "Esc cancels. The fetched sequence replaces the current one and triggers the\n"
-             "victory animation. Works from any tool, in any mode."),
-            ("C  CTCF MOTIF SCANNER",
-             "Press C to scan the loaded sequence for structural anchor motifs.\n"
-             "Six motif classes: CTCF_core (CCCTCCTGG) · CTCF_core_rc · CTCF_alt ·\n"
-             "CTCF_alt_rc · SP1_GC_box (GGGCGG) · CpG_cluster (CCGCGCGG).\n"
-             "Navigate results with ↑ ↓ arrow keys. Press Enter to send the selected\n"
-             "anchor's coordinates to the deletion sandbox (tool [2]) automatically.\n"
-             "Press C again to close the overlay."),
-            ("⇥  CELL-LINE SHIFTER  (Tab key)",
-             "Cycles the active chromatin context through three tissue types:\n"
-             "  GM12878 — lymphoblastoid B-cell · sharp compartment boundaries (purple)\n"
-             "  H1-hESC — embryonic stem cell · diffuse, open chromatin (blue)\n"
-             "  IMR90   — lung fibroblast · intermediate compaction (amber)\n"
-             "Applies a deterministic distance-based bias to the contact matrix.\n"
-             "Resets any applied variant and invalidates insulation / boundary caches."),
-        ]
-        for feat_title, feat_body in new_features:
-            lines.append(Text(f"  {feat_title}", style=t_style("primary_bold")))
-            lines.extend(_help_body(feat_body, 4))
+        if export_note:
+            export_body = export_note
+            if not export_note.startswith("Nothing"):
+                export_body += "  Files land in ~/goldbeam_exports/."
+            lines.append(Text("EXPORT  (E)", style=heading))
+            lines.extend(_help_body(export_body, 2))
             lines.append(Text(""))
 
-        lines.append(Rule(style=f"dim {t_style('border')}"))
-        lines.append(Text(""))
+        lines.append(Rule(style=rule))
 
-        # ── Simulation mode commands ──────────────────────────────────────────
-        lines.append(Text("SIMULATION MODE  (press M to enter, then type a command + Enter · Esc clears)",
-                          style=t_style("primary_bold")))
-        sim_tbl = Table(show_header=False, box=None, padding=(0, 3, 0, 0))
-        sim_tbl.add_column(style=t_style("primary_bold"), no_wrap=True)
+        # ── Simulation mode ───────────────────────────────────────────────────
+        lines.append(Text("SIMULATION MODE", style=heading))
+        lines.extend(_help_body(
+            "Press M to switch modes. In Simulation mode, typing s, d or r starts a command in the "
+            "red SIMULATE> bar under the HUD (which is why S Settings is unavailable there): "
+            "⏎ runs it, ⌫ edits, Esc clears. Other hotkeys still work while the bar is empty. "
+            "After a command runs the view jumps to [8] Structural Disruption Map.", 2))
+        sim_tbl = Table(show_header=False, box=None, padding=(0, 3, 0, 2))
+        sim_tbl.add_column(style=heading, no_wrap=True)
         sim_tbl.add_column(style="dim")
         sim_tbl.add_row("snp <pos> <REF>><ALT>", "Point mutation  —  e.g.  snp 500000 G>A")
         sim_tbl.add_row("del <start> <end>",      "Deletion range  —  e.g.  del 450000 520000")
         sim_tbl.add_row("reset",                  "Restore wildtype baseline")
         lines.append(sim_tbl)
+        lines.extend(_help_body(
+            "Positions are 0-based offsets within the loaded sequence, not chromosome coordinates "
+            "— position 0 is the first base of a fetched region. Each command replaces the "
+            "previous variant; they don't stack.", 2))
         lines.append(Text(""))
+        lines.append(Rule(style=rule))
 
-        # ── Global keyboard reference ─────────────────────────────────────────
-        lines.append(Text("GLOBAL CONTROLS", style=t_style("primary_bold")))
-        kb_pairs = [
-            ("1 – 9", "Switch active tool"),
-            ("L",     "Load new sequence (FASTA)"),
-            ("G",     "GOTO UCSC coordinate"),
-            ("⇥",     "Cycle cell-line context"),
-            ("H",     "Session history — reload past sequences"),
-            ("?",     "This help screen"),
-            ("M",     "Toggle OBSERVATION / SIMULATION"),
-            ("I",     "Launch Interpretability Suite"),
-            ("C",     "CTCF Motif Scanner overlay"),
-            ("E",     "Export active tool output"),
-            ("S",     "Settings (Observation mode)"),
-            ("Q",     "Quit flight simulator"),
+        # ── Overlays and context ──────────────────────────────────────────────
+        lines.append(Text("OVERLAYS & CONTEXT", style=heading))
+        overlays = [
+            ("G  UCSC FETCHER",
+             "Type a region such as chr7:114200000-115240000 and press ⏎. It downloads from "
+             "UCSC hg38 in the background and replaces the current sequence; if UCSC is "
+             "unreachable a synthetic sequence is used instead. Esc cancels."),
+            ("C  CTCF MOTIF SCANNER",
+             "Searches the loaded sequence for six motifs: CTCF_core (CCCTCCTGG) and its reverse "
+             "complement, CTCF_alt (GGGTGGCAG) and its reverse complement, SP1_GC_box (GGGCGG) "
+             "and CpG_cluster (CCGCGCGG). ↑↓ selects a hit; ⏎ applies a deletion over it, "
+             "switches to Simulation mode and opens [2]. C or Esc closes."),
+            ("⇥  CELL-LINE SHIFTER",
+             "Tab cycles the chromatin context applied to the contact matrix:\n"
+             "  GM12878 — lymphoblastoid B-cell · sharp TAD boundaries (purple)\n"
+             "  H1-hESC — embryonic stem cell · diffuse, open chromatin (blue)\n"
+             "  IMR90   — lung fibroblast · intermediate compaction (amber)\n"
+             "Switching clears any applied variant and the cached insulation / boundary results."),
         ]
-        # Two key/description pairs per row when the page is wide enough
-        per_row = 2 if width >= 80 else 1
-        kb_tbl = Table(show_header=False, box=None, padding=(0, 3, 0, 0))
-        for _ in range(per_row):
-            kb_tbl.add_column(style=t_style("primary_bold"), no_wrap=True, width=6)
-            kb_tbl.add_column(style="dim")
-        half = len(kb_pairs) // 2
-        for i in range(half if per_row == 2 else len(kb_pairs)):
-            if per_row == 2:
-                kb_tbl.add_row(*kb_pairs[i], *kb_pairs[i + half])
-            else:
-                kb_tbl.add_row(*kb_pairs[i])
-        lines.append(kb_tbl)
-        lines.append(Text(""))
+        for ov_title, ov_body in overlays:
+            lines.append(Text(f"  {ov_title}", style=heading))
+            lines.extend(_help_body(ov_body, 4))
+            lines.append(Text(""))
 
         # ── Tool index ────────────────────────────────────────────────────────
         lines.append(Rule(style=f"dim {t_style('border')}"))
@@ -6153,18 +6205,20 @@ def run_goldbeam_flight_simulator(
     GoldBEAM Genomic Flight Simulator.
 
     3-panel immersive retro-terminal analysis platform:
-      Left   — HUD Workspace (tool-specific content, instantly responsive to 1–8)
+      Left   — HUD Workspace (tool-specific content, instantly responsive to 1–9)
       Centre — Toolkit Registry (keyboard-navigable menu)
       Right  — Sequence Radar (motif-aware rotating DNA double helix)
 
     Non-blocking keystroke reader via os.read(fd) + select.select runs at 25 fps
     without ever blocking the animation loop.
 
-    Keyboard map
+    Keyboard map (the footer key bar and run_fs_help list these for users)
     ────────────
-    1–8   switch tool         M   toggle Observation / Simulation mode
+    1–9   switch tool         M   toggle Observation / Simulation mode
     L     load new sequence   I   launch Interpretability Suite
+    G     fetch UCSC region   C   CTCF motif scanner
     H     session history     E   export active tool output
+    Tab   cycle cell line     S   settings (Observation mode)
     ?     contextual help     Q   quit
     (Simulation mode) type snp/del/reset and press Enter to mutate
     """
