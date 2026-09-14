@@ -21,14 +21,14 @@ it from a regular shell with `curl`, `jq` and Python.
 2. [Screen layout](#2-screen-layout)
 3. [Keyboard reference](#3-keyboard-reference)
 4. [Loading sequences](#4-loading-sequences)
-5. [Tool index -> Flight Simulator (tools 1–9)](#5-tool-index--flight-simulator-tools-19)
-6. [Simulation mode -> variant commands](#6-simulation-mode--variant-commands)
-7. [Overlays -> CTCF scanner, history, cell lines](#7-overlays--ctcf-scanner-history-cell-lines)
+5. [Tool index -> Flight Simulator (tools 1–9)](#5-tool-index---flight-simulator-tools-19)
+6. [Simulation mode -> variant commands](#6-simulation-mode---variant-commands)
+7. [Overlays -> CTCF scanner, history, cell lines](#7-overlays---ctcf-scanner-history-cell-lines)
 8. [Interpretability Suite (tabs 1–7)](#8-interpretability-suite-tabs-17)
 9. [Exports and file formats](#9-exports-and-file-formats)
 10. [Settings, themes and languages](#10-settings-themes-and-languages)
 11. [Files on disk](#11-files-on-disk)
-12. [Power users -> scripting from the terminal](#12-power-users--scripting-from-the-terminal)
+12. [Power users -> scripting from the terminal](#12-power-users---scripting-from-the-terminal)
 13. [Updating and uninstalling](#13-updating-and-uninstalling)
 
 ---
@@ -160,7 +160,7 @@ chr7:114200000-115240000
 ### From history -> `H`
 
 Every loaded file or UCSC region is saved to session history, most recent first. Select an
-entry and press `⏎` to load it again ([§7](#7-overlays--ctcf-scanner-history-cell-lines)).
+entry and press `⏎` to load it again ([§7](#7-overlays---ctcf-scanner-history-cell-lines)).
 
 ---
 
@@ -199,7 +199,7 @@ Press the number key to open a tool, and `?` for its in-app help.
 Apply an SNP or a deletion and see how the predicted structure changes.
 
 1. Press `M` to switch to SIMULATION mode.
-2. Type `snp 500000 G>A` or `del 450000 520000` and press `⏎`. See [§6](#6-simulation-mode--variant-commands) for the full syntax.
+2. Type `snp 500000 G>A` or `del 450000 520000` and press `⏎`. See [§6](#6-simulation-mode---variant-commands) for the full syntax.
 3. Read the result:
    - **SDI** (Structural Disruption Index) is the mean |ΔContact| across the matrix.
      ≥ 0.15 is structurally significant; ≥ 0.30 is severe. A red ⚠ appears above the threshold.
@@ -271,11 +271,11 @@ in runs of 4 or more identical bases.
 ### 8 · Structural Disruption Map
 
 - The full **40 × 40 contact matrix** in 24-bit colour, drawn at 2× vertical resolution with
-  half-block characters. Colours run purple → yellow → white for low → high contact.
+  half-block characters. Colours run navy → blue → cyan → magenta → gold for low → high contact.
 - Bright triangles along the diagonal are TADs; off-diagonal bright spots are loops.
 - In SIMULATION mode, after a variant is applied, this panel shows the Δ map and the border
   turns red.
-- `Tab` cycles the cell-line context ([§7](#7-overlays--ctcf-scanner-history-cell-lines)).
+- `Tab` cycles the cell-line context ([§7](#7-overlays---ctcf-scanner-history-cell-lines)).
 
 ### 9 · GoldBEAM Prediction
 
@@ -321,8 +321,8 @@ background and returns up to 200 hits, sorted by position.
 | `SP1_GC_box` | `GGGCGG` |
 | `CpG_cluster` | `CCGCGCGG` |
 
-Hits show genomic coordinates when the sequence came from UCSC. `⏎` on a hit sends it to
-the deletion sandbox (tool 2).
+Hits show genomic coordinates when the sequence came from UCSC. `⏎` on a hit applies a deletion
+over it, switches to SIMULATION mode and opens tool 2.
 
 ### Session history -> `H`
 
@@ -364,11 +364,11 @@ waits for commands at its own `» interpret>` prompt. Type a command and press `
 
 | Tab | Name | What it shows | Exported by |
 |---|---|---|---|
-| 1 | **TAD Architecture** | Contact map with TAD triangles and the boundary table (insulation score, strength) | `e1` |
-| 2 | **A/B Compartments** | O/E matrix → Pearson correlation → first eigenvector. Green = A (active), blue = B (inactive). The higher-GC side is labelled A. | `e2` |
-| 3 | **Insulation Profile** | 1D diamond insulation chart; ▲ marks boundaries | `e1` |
+| 1 | **TAD Architecture** | Contact map with TAD triangles and the boundary list (bin, strength, position in kb) | `e1` |
+| 2 | **A/B Compartments** | O/E matrix → Pearson correlation → first eigenvector. Green = A (active), blue = B (inactive). The eigenvector sign is arbitrary, so A and B can come out swapped. | `e2` |
+| 3 | **Insulation Profile** | 1D diamond insulation chart, one row per bin; ◄ marks boundaries | `e1` |
 | 4 | **Loop Anchor Registry** | Ranked off-diagonal contacts: rank, bin 1/bin 2, distance in bins, score | `e3` |
-| 5 | **Sequence Saliency** | Per-bin attribution; ◆ marks the top 5 bins. Currently a GC-based proxy, later gradient attribution. | `e4` |
+| 5 | **Sequence Saliency** | Per-bin attribution; ◄ marks the top 5 bins. Currently a GC-based proxy, later gradient attribution. | `e4` |
 | 6 | **Variant Modeller** | ΔContact heatmap, mean \|Δ\|, max gain and max loss. \|Δ\| > 0.15 is significant. | -> |
 | 7 | **Export Centre** | Lists the export codes and confirms what was written | `ea` |
 
