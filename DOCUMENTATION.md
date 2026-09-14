@@ -3,7 +3,7 @@
 Reference for every tool in the SWAEV Genomics terminal client, plus recipes for driving
 it from a regular shell with `curl`, `jq` and Python.
 
-← Back to the [README](./README.md)
+<- Back to the [README](./README.md)
 
 > **About the outputs.** GoldBEAM is still in training. Every contact matrix in this build
 > comes from a deterministic *simulated* surrogate, not from trained model weights. The 40×40
