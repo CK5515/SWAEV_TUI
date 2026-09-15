@@ -40,7 +40,7 @@ to switch tools:
 | 3 | Biophysical Profiler | Helical twist, DNA bendability, CpG island track |
 | 4 | Insulation Scoring | Diamond insulation profile and a ranked TAD boundary table |
 | 5 | Multi-Scale Dilation Check | d1/d2/d4/d8 contact-head diagnostics and P(s) decay curve |
-| 6 | Species-Embedding Bias | CpG depletion, repeat density, check for mammalian-like DNA |
+| 6 | Sequence Composition Check | CpG depletion, repeat density, check the input looks like human DNA |
 | 7 | Boundary Anchor Scan | CTCF motif density and predicted loop anchor pairs |
 | 8 | Structural Disruption Map | 24-bit colour 40×40 contact matrix with a variant Δ overlay |
 | 9 | GoldBEAM Prediction | Model architecture, benchmark target and training status |

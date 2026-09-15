@@ -175,7 +175,7 @@ Press the number key to open a tool, and `?` for its in-app help.
 | 3 | ⬡ Biophysical Profiler | Helical twist · bendability · CpG island track | your DNA | saliency `.bedGraph` |
 | 4 | ≋ Insulation Scoring | TAD barrier profile and boundary table | simulated matrix | TAD boundaries `.bed` |
 | 5 | ⊞ Multi-Scale Dilation Check | d1/d2/d4/d8 contact-head diagnostics | simulated matrix | -> |
-| 6 | ◍ Species-Embedding Bias | CpG depletion · repeat density · GC bias | your DNA | saliency `.bedGraph` |
+| 6 | ◍ Sequence Composition Check | CpG depletion · repeat density · GC bias | your DNA | saliency `.bedGraph` |
 | 7 | ⊡ Boundary Anchor Scan | CTCF density + predicted loop anchors | DNA + matrix | TAD `.bed` + loops `.tsv` |
 | 8 | ⬛ Structural Disruption Map | 24-bit colour contact matrix + Δ overlay | simulated matrix | -> |
 | 9 | ⬡ GoldBEAM Prediction | Model status · benchmark · mission control | -> | -> |
@@ -188,9 +188,10 @@ Press the number key to open a tool, and `?` for its in-app help.
   sequence; high values mean complex DNA.
 - **Composition stats:**
   - GC% -> fraction of G and C bases
-  - Tm -> Wallace rule: 2 °C per A/T, 4 °C per G/C
-  - CpG O/E -> observed/expected CpG; the mammalian norm is 0.60–0.80
-  - Complexity -> 3-mer entropy (Wootton–Federhen)
+  - Tm -> Wallace rule (2 °C per A/T, 4 °C per G/C) below 14 bp; `64.9 + 41·(GC − 16.4)/N`
+    from 14 bp up. N bases are excluded.
+  - CpG O/E -> observed/expected CpG, with N bases excluded; the mammalian norm is 0.60–0.80
+  - Complexity -> 3-mer entropy normalised to 0–1 (Wootton–Federhen)
 
 **Use it for:** checking a region's composition before you model it.
 
@@ -245,15 +246,15 @@ Diagnostics for GoldBEAM's four dilated convolutional heads:
 - The **P(s) decay curve** plots contact probability against genomic distance. It should
   fall steadily; a flat curve points to a matrix artefact.
 
-### 6 · Species-Embedding Bias
+### 6 · Sequence Composition Check
 
-Checks whether the sequence looks like the mammalian DNA GoldBEAM is trained on:
+Checks whether the sequence looks like the human DNA GoldBEAM is trained on:
 
 | Signal | Interpretation |
 |---|---|
-| CpG O/E < 0.45 and GC% > 35% | methylated mammalian DNA ✓ |
-| CpG O/E > 1.0 | invertebrate or prokaryote |
-| GC% > 55% | GC-rich organism (plant or bacterium) |
+| CpG O/E < 0.45 and GC% > 35% | consistent with human (mammalian) DNA ✓ |
+| CpG O/E > 1.0 | unlike human DNA (invertebrate or prokaryote-like) |
+| GC% > 55% | unlike human DNA (GC-rich) |
 
 It also plots the **CpG depletion profile** and **repeat density**: the fraction of each bin
 in runs of 4 or more identical bases.
