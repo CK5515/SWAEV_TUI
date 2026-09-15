@@ -36,7 +36,7 @@ console = Console()
 CONFIG_PATH = os.path.expanduser("~/.goldbeam.json")
 DEFAULT_API_URL = "https://gateway.swaev.com"
 GITHUB_RAW = "https://raw.githubusercontent.com/CK5515/SWAEV_TUI/main"
-__version__ = "2026-09-14"
+__version__ = "2026-09-15"
 
 # -----------------------------------------------------------------------------
 # Color Themes & Localization Configuration
@@ -2074,27 +2074,54 @@ def compute_sequence_stats(tokens: List[int]) -> Dict[str, Any]:
     at_skew = (a - t_count) / (a + t_count) if (a + t_count) > 0 else 0.0
     gc_skew = (g - c) / (g + c) if (g + c) > 0 else 0.0
 
-    # Marmur-Doty melting temperature
-    if n < 14:
+    # Melting temperature over ACGT bases only: Wallace rule for short oligos,
+    # Marmur-Doty GC formula from 14 bp up
+    if valid < 14:
         tm = 2 * at + 4 * gc
     else:
-        tm = 64.9 + 41.0 * (gc - 16.4) / n
+        tm = 64.9 + 41.0 * (gc - 16.4) / valid
 
-    # CpG dinucleotide count (C=1 followed by G=2)
+    # CpG dinucleotide count (C=1 followed by G=2); expected = C·G / ACGT length
     cpg_count = sum(1 for i in range(len(tokens) - 1) if tokens[i] == 1 and tokens[i + 1] == 2)
-    cpg_oe = (cpg_count * n) / (c * g) if (c > 0 and g > 0) else 0.0
+    cpg_oe = (cpg_count * valid) / (c * g) if (c > 0 and g > 0) else 0.0
+
+    # Sequence complexity: Shannon entropy of the 3-mer distribution, normalised to [0, 1]
+    # (max = log2(64) = 6 bits). 3-mers spanning an N (or any non-ACGT token) are skipped.
+    kmer_counts = [0] * 64
+    kmer_idx, run = 0, 0
+    for tok in tokens:
+        if 0 <= tok <= 3:
+            kmer_idx = ((kmer_idx << 2) | tok) & 63
+            run += 1
+            if run >= 3:
+                kmer_counts[kmer_idx] += 1
+        else:
+            run = 0
+    kmer_total = sum(kmer_counts)
+    complexity = (
+        -sum((k / kmer_total) * math.log2(k / kmer_total) for k in kmer_counts if k) / 6.0
+        if kmer_total else 0.0
+    )
 
     return {
         "length": n, "valid": valid,
         "a": a, "c": c, "g": g, "t": t_count, "n_count": n_count,
+        "n_pct": (n_count / n * 100) if n > 0 else 0.0,
         "gc_pct": gc_pct, "at_skew": at_skew, "gc_skew": gc_skew,
         "tm": tm, "cpg_count": cpg_count, "cpg_oe": cpg_oe,
+        "complexity": complexity,
     }
 
 
 # ============================================================
 # GOLDBEAM INTERPRETABILITY SUITE — Core Analysis Engine
 # ============================================================
+
+# Contact maps are simulated until the trained GoldBEAM model is released; set False once
+# get_contact_matrix calls the gateway so the header stops labelling maps as simulated.
+PREDICTIONS_SIMULATED = True
+MODEL_OUTPUT_LABEL = "448 bins @ 2,048 bp"
+
 
 def get_contact_matrix(tokens: List[int]) -> Tuple[List[List[float]], str]:
     """
@@ -3468,10 +3495,11 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
              "complex DNA with strong combinatorial information content."),
             ("COMPOSITION STATS",
              "GC% — fraction of G/C bases. "
-             "Tm — estimated melting temperature (Wallace rule: 2°C per AT pair, 4°C per GC). "
+             "Tm — estimated melting temperature (Wallace rule, 2°C per AT and 4°C per GC, below 14 bp; "
+             "64.9 + 41·(GC − 16.4)/N from 14 bp up, N = ACGT bases). "
              "CpG O/E — CpG dinucleotide observed/expected ratio; mammalian norm 0.60–0.80 "
              "due to methylation-driven depletion. "
-             "Complexity — Shannon entropy of 3-mer distribution (Wootton–Federhen, 1993)."),
+             "Complexity — Shannon entropy of 3-mer distribution, normalised to 0–1 (Wootton–Federhen, 1993)."),
         ],
         "export": "Per-bin saliency track (.bedGraph; currently a GC-content proxy).",
     },
@@ -3572,15 +3600,15 @@ _FS_TOOL_HELP: Dict[str, Dict[str, Any]] = {
     },
     "6": {
         "icon": "◍",
-        "name": "Species-Embedding Bias",
+        "name": "Sequence Composition Check",
         "tagline": "CpG depletion · repeat density · GC bias heuristics",
         "sections": [
-            ("SPECIES INFERENCE HEURISTIC",
-             "GoldBEAM is trained on mammalian genomes. This panel checks whether the "
-             "loaded sequence matches the expected compositional fingerprint:\n"
-             "  CpG O/E < 0.45 + GC% > 35%  →  methylated mammalian DNA ✓\n"
-             "  CpG O/E > 1.0               →  invertebrate or prokaryote\n"
-             "  GC% > 55%                   →  GC-rich organism (plant / bacteria)"),
+            ("COMPOSITION CHECK",
+             "GoldBEAM is trained on human genomes. This panel checks whether the "
+             "loaded sequence matches the compositional fingerprint of human DNA:\n"
+             "  CpG O/E < 0.45 + GC% > 35%  →  consistent with human (mammalian) DNA ✓\n"
+             "  CpG O/E > 1.0               →  unlike human DNA (invertebrate / prokaryote-like)\n"
+             "  GC% > 55%                   →  unlike human DNA (GC-rich)"),
             ("CpG DEPLETION PROFILE",
              "Mammalian methylation depletes CpG dinucleotides to ~60–80% of the "
              "expectation from random composition. Bins with high CpG O/E are active "
@@ -3846,6 +3874,12 @@ def check_and_apply_update() -> None:
         dl = requests.get(f"{GITHUB_RAW}/client.py", timeout=20)
         if dl.status_code != 200:
             return
+        # GitHub's raw CDN caches files separately for a few minutes, so a fresh version.txt can
+        # arrive with a stale client.py. Only install a download that declares the advertised
+        # version and compiles; otherwise keep running this copy (avoids a restart loop).
+        if f'__version__ = "{latest}"' not in dl.text:
+            return
+        compile(dl.text, "client.py", "exec")
         self_path = os.path.abspath(__file__)
         tmp_path = self_path + ".tmp"
         with open(tmp_path, "w", encoding="utf-8") as fh:
@@ -4125,9 +4159,13 @@ def _cpg_oe_per_bin(tokens: List[int], n_bins: int) -> List[float]:
             out.append(0.65)
             continue
         cpg = sum(1 for i in range(n - 1) if chunk[i] == 1 and chunk[i + 1] == 2)
-        c_f = sum(1 for t in chunk if t == 1) / n
-        g_f = sum(1 for t in chunk if t == 2) / n
-        expected = c_f * g_f * n
+        valid = sum(1 for t in chunk if 0 <= t <= 3)  # N bases don't count toward expected
+        if valid < 2:
+            out.append(0.65)
+            continue
+        c_f = sum(1 for t in chunk if t == 1) / valid
+        g_f = sum(1 for t in chunk if t == 2) / valid
+        expected = c_f * g_f * valid
         oe = (cpg / expected) if expected > 0.001 else 0.65
         out.append(min(2.0, max(0.0, oe)))
     return out
@@ -4705,7 +4743,7 @@ _FS_TOOLKIT_LABELS = {
     3: "Biophysical Profiler",
     4: "Insulation Scoring",
     5: "Multi-Scale Dilation Check",
-    6: "Species-Embedding Bias",
+    6: "Sequence Composition Check",
     7: "Boundary Anchor Scan",
     8: "Structural Disruption",
     9: "GoldBEAM Prediction",
@@ -4760,7 +4798,6 @@ def render_flight_header(
     else:
         len_str = f"{seq_len:,} bp"
 
-    n_bins_display = min(256, max(1, seq_len // 4096)) if seq_len > 0 else 256
     fname = (filename or "NO SEQUENCE LOADED")[-36:]
     tier = (config.get("subscription_tier") or USER_STATE.get("subscription_tier") or "sandbox").upper()
     username = (config.get("username") or USER_STATE.get("name") or "researcher").lower()
@@ -4829,14 +4866,17 @@ def render_flight_header(
     def _metric(label: str) -> Text:
         return Text(f"{label:<20}", style="dim", no_wrap=True, overflow="ellipsis")
 
-    m_accel = _metric("MAPPED ACCELERATOR")
-    m_accel.append("16× v6e TPU Pod Cluster", style=t_style("primary_bold"))
+    m_accel = _metric("INFERENCE BACKEND")
+    backend = "Offline sandbox" if tier == "SANDBOX" else "GoldBEAM gateway (EU)"
+    m_accel.append(backend, style=t_style("primary_bold"))
+    if PREDICTIONS_SIMULATED:
+        m_accel.append("  · contact maps simulated", style="dim")
     m_cell = _metric("CELLULAR CONTEXT")
     m_cell.append(f"{_cl_name} · hg38", style=f"bold {_cl_color}")
     m_file = _metric("STREAMING FILE")
     m_file.append(fname, style="bold #00ffcc")
     m_res = _metric("WINDOW RESOLUTION")
-    m_res.append(f"{len_str}  [{n_bins_display} bins @ 4 kb/bin]", style=t_style("primary_bold"))
+    m_res.append(f"{len_str}  [{MODEL_OUTPUT_LABEL}]", style=t_style("primary_bold"))
     m_gc = _metric("GC CONTENT")
     m_gc.append("█" * gc_bar_n, style=t_style("primary_bold"))
     m_gc.append("░" * (20 - gc_bar_n), style="dim")
@@ -5363,8 +5403,8 @@ def render_hud_6_species_bias(
     hud_w: int,
     hud_h: int,
 ) -> Panel:
-    """[6] Species-Embedding Bias — CpG depletion, repeat density, GC bias."""
-    title = f"[{t_style('primary_bold')}]◈ [6] SPECIES-EMBEDDING BIAS ◈[/{t_style('primary_bold')}]"
+    """[6] Sequence Composition Check — is the input human-like? CpG depletion, repeat density, GC."""
+    title = f"[{t_style('primary_bold')}]◈ [6] SEQUENCE COMPOSITION CHECK ◈[/{t_style('primary_bold')}]"
     if not tokens:
         return _fs_panel([Text("  No sequence loaded.", style="dim")], title)
 
@@ -5387,21 +5427,21 @@ def render_hud_6_species_bias(
     mean_gc = sum(gc_vals) / len(gc_vals)
     mean_rep = sum(rep_vals) / len(rep_vals)
 
-    # Species inference heuristic
+    # Composition check: does the input resemble the human DNA the model is trained on?
     if mean_cpg < 0.45 and mean_gc > 0.35:
-        species_call = "Homo sapiens / Mus musculus (methylated mammalian)"
+        species_call = "Consistent with human (mammalian) DNA"
         species_conf = min(0.95, 0.5 + (0.45 - mean_cpg) * 2)
         species_style = t_style("success_bold")
     elif mean_cpg > 1.0:
-        species_call = "Non-mammalian (invertebrate / prokaryote)"
+        species_call = "Unlike human DNA (invertebrate / prokaryote-like)"
         species_conf = min(0.85, 0.4 + (mean_cpg - 1.0))
         species_style = "bold #0EA5E9"
     elif mean_gc > 0.55:
-        species_call = "GC-rich organism (plant / bacteria)"
+        species_call = "Unlike human DNA (GC-rich)"
         species_conf = min(0.80, 0.3 + (mean_gc - 0.55) * 4)
         species_style = "bold #ffd700"
     else:
-        species_call = "Unclassified / mixed"
+        species_call = "Unclear / mixed composition"
         species_conf = 0.40
         species_style = "dim"
 
@@ -5414,8 +5454,8 @@ def render_hud_6_species_bias(
 
     lines: List[Any] = []
 
-    # Species inference panel
-    lines.append(Text("SPECIES CONDITIONING INFERENCE", style="dim #aaddaa"))
+    # Composition verdict
+    lines.append(Text("MATCH TO HUMAN TRAINING DATA", style="dim #aaddaa"))
     lines.append(Text(f"  ◈ {species_call}", style=species_style))
 
     conf_w = max(4, hud_w - 22)
@@ -6417,13 +6457,15 @@ def run_goldbeam_flight_simulator(
         ) as live:
             live_ref.append(live)
             # ── Boot animation (same Live context — no flash) ─────────────────
+            _sandbox = (config.get("subscription_tier") or USER_STATE.get("subscription_tier") or "sandbox").lower() == "sandbox"
             _boot_msgs = [
-                "[✓] Secure gateway       authenticated",
-                "[✓] TPU v6e cluster      16× Pod mapped",
-                "[✓] GoldBEAM weights     frozen encoder loaded",
-                "[✓] Sequence engine      O(N) model active",
-                "[✓] 3D genome models     all heads online",
-                "[✓] Contact simulator    standby",
+                "[✓] Session              offline sandbox" if _sandbox else "[✓] Secure gateway       authenticated",
+                "[✓] Reference genome     hg38",
+                "[✓] Sequence tools       9 tools ready",
+                "[✓] Contact maps         simulated (model in training)" if PREDICTIONS_SIMULATED
+                else "[✓] Contact maps         GoldBEAM gateway",
+                "[✓] Exports              reports · bedGraph",
+                "[✓] Session history      stored on this machine",
             ]
             _boot_phases = [
                 ("zoom",          0, 0.10, 1),
