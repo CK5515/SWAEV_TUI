@@ -425,8 +425,8 @@ Press `S` in OBSERVATION mode:
 **Themes:**
 
 - Retro Multi Colour (`multi_colour`)
-- SWAEV Blue (`swaev_blue`)
-- SWAEV Lime (`swaev_lime`, the default)
+- SWAEV Blue (`swaev_blue`, the default): the swaev.com house style, Prussian blue ink on light terminals and luminous blue on dark ones
+- SWAEV Lime (`swaev_lime`): the original SWAEV lime, for dark terminals
 - Cyberpunk Neon (`cyberpunk_neon`)
 - Retro Amber (`retro_amber`)
 
@@ -451,7 +451,7 @@ Press `S` in OBSERVATION mode:
   "api_url": "https://gateway.swaev.com",
   "api_key": "YOUR_X_API_KEY",
   "username": "Ada",
-  "theme": "swaev_lime",
+  "theme": "swaev_blue",
   "language": "en",
   "onboarded": true,
   "fasta_dir": "/home/ada/genomes",

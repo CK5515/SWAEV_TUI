@@ -25,6 +25,8 @@ try:
     from rich.rule import Rule
     from rich.layout import Layout
     from rich.padding import Padding
+    from rich.color import Color
+    from rich.style import Style
 except ImportError:
     print("Error: The 'rich' library is required to run this TUI client.")
     print("Please install it by running: pip install rich")
@@ -36,7 +38,7 @@ console = Console()
 CONFIG_PATH = os.path.expanduser("~/.goldbeam.json")
 DEFAULT_API_URL = "https://gateway.swaev.com"
 GITHUB_RAW = "https://raw.githubusercontent.com/CK5515/SWAEV_TUI/main"
-__version__ = "2026-09-15"
+__version__ = "2026-09-21"
 
 # -----------------------------------------------------------------------------
 # Color Themes & Localization Configuration
@@ -68,31 +70,31 @@ THEME_CONFIGS = {
     },
     "swaev_blue": {
         "name": "SWAEV Blue",
-        "desc": "High-readability light mode matching SWAEV website branding (#057db5 brand text, slate text).",
-        "primary": "#057db5",
-        "primary_bold": "bold #057db5",
-        "secondary": "#0ea5e9",
-        "secondary_bold": "bold #0ea5e9",
-        "accent": "#0ea5e9",
-        "accent_bold": "bold #0ea5e9",
-        "success": "#047857",
-        "success_bold": "bold #047857",
-        "warning": "#b45309",
-        "warning_bold": "bold #b45309",
-        "error": "#b91c1c",
-        "error_bold": "bold #b91c1c",
-        "text": "#0f172a",
-        "text_bold": "bold #0f172a",
-        "border": "#057db5",
-        "title": "#057db5",
-        "art_primary": "#057db5",
-        "art_primary_bold": "bold #057db5",
-        "art_limbs": "#0ea5e9",
-        "art_limbs_bold": "bold #0ea5e9",
+        "desc": "The swaev.com house style: Prussian blue ink on light terminals, luminous blue on dark ones.",
+        "primary": "#86CBFF",
+        "primary_bold": "bold #86CBFF",
+        "secondary": "#4F9BD9",
+        "secondary_bold": "bold #4F9BD9",
+        "accent": "#B8E0FF",
+        "accent_bold": "bold #B8E0FF",
+        "success": "#34D399",
+        "success_bold": "bold #34D399",
+        "warning": "#FBBF24",
+        "warning_bold": "bold #FBBF24",
+        "error": "#F87171",
+        "error_bold": "bold #F87171",
+        "text": "white",
+        "text_bold": "bold white",
+        "border": "#86CBFF",
+        "title": "#86CBFF",
+        "art_primary": "#86CBFF",
+        "art_primary_bold": "bold #86CBFF",
+        "art_limbs": "#4F9BD9",
+        "art_limbs_bold": "bold #4F9BD9",
     },
     "swaev_lime": {
         "name": "SWAEV Lime",
-        "desc": "Sleek cyber-green experience matching SWAEV website dark-mode accent (#deff9a).",
+        "desc": "The original SWAEV lime, for dark terminals.",
         "primary": "chartreuse1",
         "primary_bold": "bold chartreuse1",
         "secondary": "green",
@@ -230,8 +232,8 @@ TRANSLATIONS = {
         "theme_desc": "Choose a theme that matches your workstation branding:",
         "theme_prompt": "Choose theme [1-5]: ",
         "theme_classic": "(Classic Retro)",
-        "theme_blue_desc": "(Branded light mode accent)",
-        "theme_lime_desc": "(Branded dark mode accent)",
+        "theme_blue_desc": "(SWAEV house style, default)",
+        "theme_lime_desc": "(Original SWAEV lime, dark terminals)",
         "theme_neon_desc": "(Hot Pink & Violet)",
         "theme_amber_desc": "(CRT Phosphor monochrome)",
         "theme_apply_note": "The client border, titles, and bacteriophage art will adapt immediately.",
@@ -310,8 +312,8 @@ TRANSLATIONS = {
         "theme_desc": "Elija un tema que coincida con la marca de su estación de trabajo:",
         "theme_prompt": "Elija tema [1-5]: ",
         "theme_classic": "(Clásico Retro)",
-        "theme_blue_desc": "(Acento de marca en modo claro)",
-        "theme_lime_desc": "(Acento de marca en modo oscuro)",
+        "theme_blue_desc": "(Estilo de la casa SWAEV, predeterminado)",
+        "theme_lime_desc": "(Lima original de SWAEV, terminales oscuros)",
         "theme_neon_desc": "(Rosa caliente y Violeta)",
         "theme_amber_desc": "(Fósforo CRT monocromo)",
         "theme_apply_note": "El borde del cliente, los títulos y el arte del bacteriófago se adaptarán de inmediato.",
@@ -390,8 +392,8 @@ TRANSLATIONS = {
         "theme_desc": "Choisissez un thème qui correspond à l'image de votre station de travail:",
         "theme_prompt": "Choisissez le thème [1-5]: ",
         "theme_classic": "(Classique Rétro)",
-        "theme_blue_desc": "(Accent de marque mode clair)",
-        "theme_lime_desc": "(Accent de marque mode sombre)",
+        "theme_blue_desc": "(Style maison SWAEV, par défaut)",
+        "theme_lime_desc": "(Vert citron SWAEV d'origine, terminaux sombres)",
         "theme_neon_desc": "(Rose vif et Violet)",
         "theme_amber_desc": "(Phosphore CRT monochrome)",
         "theme_apply_note": "La bordure du client, les titres et l'art du bactériophage s'adapteront immédiatement.",
@@ -470,8 +472,8 @@ TRANSLATIONS = {
         "theme_desc": "Wählen Sie ein Theme, das zu Ihrem Arbeitsplatz-Branding passt:",
         "theme_prompt": "Theme wählen [1-5]: ",
         "theme_classic": "(Klassisches Retro)",
-        "theme_blue_desc": "(Branded Light-Mode-Akzent)",
-        "theme_lime_desc": "(Branded Dark-Mode-Akzent)",
+        "theme_blue_desc": "(SWAEV-Hausstil, Standard)",
+        "theme_lime_desc": "(Originales SWAEV-Limettengrün, dunkle Terminals)",
         "theme_neon_desc": "(Hot Pink & Violett)",
         "theme_amber_desc": "(CRT-Phosphor einfarbig)",
         "theme_apply_note": "Der Client-Rand, die Titel und das Bakteriophagen-Design passen sich sofort an.",
@@ -490,7 +492,7 @@ TRANSLATIONS_EXTENSION = {
         "bg_opt_desc1": "SWAEV Blue is styled after the SWAEV website branding.",
         "bg_opt_desc2": "To ensure text is perfectly readable, please select your terminal background mode:",
         "bg_opt_dark": "Dark Background (converts body text to bright high-contrast colors)",
-        "bg_opt_light": "Light/White Background (keeps body text as dark slate #0f172a)",
+        "bg_opt_light": "Light/White Background (Prussian blue ink on paper)",
         "bg_prompt": "Choose background mode [1-2] (default 1): ",
         "dir_val_title": "Directory Validation",
         "dir_val_selected_fasta": "Selected FASTA Path: [bold cyan]{path}[/bold cyan]",
@@ -511,7 +513,7 @@ TRANSLATIONS_EXTENSION = {
         "bg_opt_desc1": "SWAEV Blue está diseñado según la marca del sitio web SWAEV.",
         "bg_opt_desc2": "Para garantizar que el texto sea perfectamente legible, seleccione el modo de fondo de su terminal:",
         "bg_opt_dark": "Fondo oscuro (convierte el texto del cuerpo en colores brillantes de alto contraste)",
-        "bg_opt_light": "Fondo claro/blanco (mantiene el texto del cuerpo como pizarra oscura #0f172a)",
+        "bg_opt_light": "Fondo claro/blanco (tinta azul de Prusia sobre papel)",
         "bg_prompt": "Elija el modo de fondo [1-2] (predeterminado 1): ",
         "dir_val_title": "Validación de carpetas",
         "dir_val_selected_fasta": "Ruta FASTA seleccionada: [bold cyan]{path}[/bold cyan]",
@@ -532,7 +534,7 @@ TRANSLATIONS_EXTENSION = {
         "bg_opt_desc1": "SWAEV Blue est conçu d'après la marque du site Web SWAEV.",
         "bg_opt_desc2": "Pour que le texte soit parfaitement lisible, veuillez sélectionner le mode de fond de votre terminal :",
         "bg_opt_dark": "Arrière-plan sombre (convertit le texte en couleurs vives à contraste élevé)",
-        "bg_opt_light": "Arrière-plan clair/blanc (conserve le texte en gris foncé #0f172a)",
+        "bg_opt_light": "Arrière-plan clair/blanc (encre bleu de Prusse sur papier)",
         "bg_prompt": "Choisissez le mode d'arrière-plan [1-2] (défaut 1) : ",
         "dir_val_title": "Validation du répertoire",
         "dir_val_selected_fasta": "Chemin FASTA sélectionné : [bold cyan]{path}[/bold cyan]",
@@ -553,7 +555,7 @@ TRANSLATIONS_EXTENSION = {
         "bg_opt_desc1": "SWAEV Blue ist dem Branding der SWAEV-Website nachempfunden.",
         "bg_opt_desc2": "Um eine perfekte Lesbarkeit des Textes zu gewährleisten, wählen Sie bitte den Hintergrundmodus Ihres Terminals:",
         "bg_opt_dark": "Dunkler Hintergrund (konvertiert Fließtext in helle, kontrastreiche Farben)",
-        "bg_opt_light": "Heller/Weißer Hintergrund (belässt Fließtext in dunklem Schiefer #0f172a)",
+        "bg_opt_light": "Heller/Weißer Hintergrund (preußischblaue Tinte auf Papier)",
         "bg_prompt": "Hintergrundmodus wählen [1-2] (Standard 1): ",
         "dir_val_title": "Verzeichnis-Validierung",
         "dir_val_selected_fasta": "Ausgewählter FASTA-Pfad: [bold cyan]{path}[/bold cyan]",
@@ -573,6 +575,61 @@ for lang, keys_dict in TRANSLATIONS_EXTENSION.items():
 
 CURRENT_THEME = "multi_colour"
 CURRENT_LANG = "en"
+
+# SWAEV Blue follows swaev.com: Prussian ink on paper for light terminals, the luminous blue glow for dark ones.
+SWAEV_BLUE_INKS = {
+    "dark": {"primary": "#86CBFF", "secondary": "#4F9BD9", "accent": "#B8E0FF", "success": "#34D399",
+             "warning": "#FBBF24", "error": "#F87171", "text": "white", "art_primary": "#86CBFF", "art_limbs": "#4F9BD9"},
+    "light": {"primary": "#1D4E89", "secondary": "#4A77AE", "accent": "#2F6E9E", "success": "#03644A",
+              "warning": "#9A4A07", "error": "#A1261B", "text": "#15202E", "art_primary": "#1D4E89", "art_limbs": "#4A77AE"},
+}
+
+# Panels and charts hard-code some colours. While SWAEV Blue is active they are re-inked so every screen
+# matches the site: brand tones become blues, gold stays for GoldBEAM itself, red stays for errors and losses.
+SWAEV_BLUE_REMAP = {
+    "dark": {
+        "#0ea5e9": "#4F9BD9", "chartreuse1": "#B8E0FF", "spring_green1": "#86CBFF", "#00ffcc": "#B8E0FF",
+        "#00ffff": "#B8E0FF", "#00ee88": "#86CBFF", "#00ff88": "#86CBFF", "#ffd700": "#6F98C4",
+        "#aaddaa": "#9FB3C8", "#aaaaff": "#86CBFF", "#4488bb": "#4F9BD9", "#ffaa00": "#F0C049",
+        "#cc8800": "#C9A13A", "#ff4444": "#F87171",
+    },
+    "light": {
+        "#0ea5e9": "#4A77AE", "chartreuse1": "#1D4E89", "spring_green1": "#2F6E9E", "#00ffcc": "#2F6E9E",
+        "#00ffff": "#1D4E89", "#00ee88": "#4A77AE", "#00ff88": "#4A77AE", "#ffd700": "#6E8DB5",
+        "#aaddaa": "#334155", "#aaaaff": "#4A77AE", "#4488bb": "#4A77AE", "#334466": "#B9C3CF",
+        "#ffffff": "#15202E", "#000000": "#F4F2EC", "#111111": "#DCE4EE",
+        "#ffaa00": "#8A5A00", "#cc8800": "#9A6A10", "#886600": "#A08A5A", "#664400": "#B8A57A",
+        "#cc6600": "#9A6A10", "#ff8800": "#9A4A07", "#ff4444": "#A1261B", "dark_orange": "#9A4A07",
+        "#bb9af7": "#6B3F8A", "#f7768e": "#A1264B", "#ff9e64": "#9A4A07", "#aa44ff": "#6B3F8A", "#00aaff": "#1D4E89",
+    },
+}
+
+_rich_color_parse = Color.parse
+_COLOR_REMAP: Dict[str, str] = {}
+
+
+def _themed_color_parse(color: str) -> "Color":
+    return _rich_color_parse(_COLOR_REMAP.get(color.lower().strip(), color))
+
+
+Color.parse = staticmethod(_themed_color_parse)
+
+
+def apply_theme(theme_key: str, background: str = "dark") -> None:
+    """Activates a theme. SWAEV Blue also picks its inks for the terminal background and re-inks hard-coded colours."""
+    global CURRENT_THEME
+    CURRENT_THEME = theme_key
+    ink = "light" if background == "light" else "dark"
+    blue = THEME_CONFIGS["swaev_blue"]
+    for key, value in SWAEV_BLUE_INKS[ink].items():
+        blue[key] = value
+        blue[key + "_bold"] = "bold " + value
+    blue["border"] = blue["title"] = blue["primary"]
+    remap = SWAEV_BLUE_REMAP[ink] if theme_key == "swaev_blue" else {}
+    if remap != _COLOR_REMAP:
+        _COLOR_REMAP.clear()
+        _COLOR_REMAP.update(remap)
+        Style.parse.cache_clear()  # cached styles hold colours parsed under the previous theme
 
 
 def t_style(style_key: str) -> str:
@@ -655,8 +712,8 @@ def format_phage_style(art_str: str) -> str:
             )
 
 def update_theme_and_lang_globals(config: Dict[str, Any]):
-    global CURRENT_THEME, CURRENT_LANG
-    CURRENT_THEME = config.get("theme", "swaev_lime")
+    global CURRENT_LANG
+    apply_theme(config.get("theme", "swaev_blue"), config.get("terminal_background", "dark"))
     CURRENT_LANG = config.get("language", "en")
 
 
@@ -673,7 +730,7 @@ def clear_screen_completely():
 # Configuration & Local Storage
 # -----------------------------------------------------------------------------
 def load_config() -> Dict[str, Any]:
-    config = {"api_url": DEFAULT_API_URL, "api_key": "", "username": "", "theme": "swaev_lime", "language": "en", "onboarded": False, "fasta_dir": ".", "terminal_background": "dark"}
+    config = {"api_url": DEFAULT_API_URL, "api_key": "", "username": "", "theme": "swaev_blue", "language": "en", "onboarded": False, "fasta_dir": ".", "terminal_background": "dark"}
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r") as f:
@@ -691,14 +748,6 @@ def load_config() -> Dict[str, Any]:
         except Exception:
             pass
 
-    # Apply dynamic Dual-Mode Slate/White Adapter for SWAEV Blue theme
-    if config.get("terminal_background", "dark") == "light":
-        THEME_CONFIGS["swaev_blue"]["text"] = "#0f172a"
-        THEME_CONFIGS["swaev_blue"]["text_bold"] = "bold #0f172a"
-    else:
-        THEME_CONFIGS["swaev_blue"]["text"] = "white"
-        THEME_CONFIGS["swaev_blue"]["text_bold"] = "bold white"
-        
     return config
 
 
@@ -772,8 +821,8 @@ def run_onboarding_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
             t("theme_desc"),
             "",
             f"  [bold yellow][1][/bold yellow] [bold cyan]Multi Colour[/bold cyan] {t('theme_classic')}",
-            f"  [bold yellow][2][/bold yellow] [bold #0ea5e9]SWAEV Blue[/bold #0ea5e9] {t('theme_blue_desc')}",
-            f"  [bold yellow][3][/bold yellow] [bold chartreuse1]SWAEV Lime[/bold chartreuse1] {t('theme_lime_desc')}",
+            f"  [bold yellow][2][/bold yellow] [bold #4F9BD9]SWAEV Blue[/bold #4F9BD9] {t('theme_blue_desc')}",
+            f"  [bold yellow][3][/bold yellow] [bold #87ff00]SWAEV Lime[/bold #87ff00] {t('theme_lime_desc')}",
             f"  [bold yellow][4][/bold yellow] [bold hot_pink]Cyberpunk Neon[/bold hot_pink] {t('theme_neon_desc')}",
             f"  [bold yellow][5][/bold yellow] [bold orange3]Retro Amber[/bold orange3] {t('theme_amber_desc')}",
             "",
@@ -790,7 +839,7 @@ def run_onboarding_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
             "5": "retro_amber"
         }
         
-        selected_theme_key = theme_map.get(theme_choice, "swaev_lime") if theme_choice else "swaev_lime"
+        selected_theme_key = theme_map.get(theme_choice, "swaev_blue") if theme_choice else "swaev_blue"
         config["theme"] = selected_theme_key
         
         # SWAEV Blue Background Optimization Prompt
@@ -812,16 +861,7 @@ def run_onboarding_wizard(config: Dict[str, Any]) -> Dict[str, Any]:
             else:
                 config["terminal_background"] = "dark"
                 
-        # Re-load config to apply overrides
-        if config.get("terminal_background", "dark") == "light":
-            THEME_CONFIGS["swaev_blue"]["text"] = "#0f172a"
-            THEME_CONFIGS["swaev_blue"]["text_bold"] = "bold #0f172a"
-        else:
-            THEME_CONFIGS["swaev_blue"]["text"] = "white"
-            THEME_CONFIGS["swaev_blue"]["text_bold"] = "bold white"
-            
-        global CURRENT_THEME
-        CURRENT_THEME = selected_theme_key
+        apply_theme(selected_theme_key, config.get("terminal_background", "dark"))
         
         # Flash a quick preview success
         clear_screen_completely()
@@ -999,8 +1039,8 @@ def run_settings_menu(config: Dict[str, Any]) -> None:
                 t("theme_desc"),
                 "",
                 f"  [bold yellow][1][/bold yellow] [bold cyan]Multi Colour[/bold cyan] {t('theme_classic')}",
-                f"  [bold yellow][2][/bold yellow] [bold #0ea5e9]SWAEV Blue[/bold #0ea5e9] {t('theme_blue_desc')}",
-                f"  [bold yellow][3][/bold yellow] [bold chartreuse1]SWAEV Lime[/bold chartreuse1] {t('theme_lime_desc')}",
+                f"  [bold yellow][2][/bold yellow] [bold #4F9BD9]SWAEV Blue[/bold #4F9BD9] {t('theme_blue_desc')}",
+                f"  [bold yellow][3][/bold yellow] [bold #87ff00]SWAEV Lime[/bold #87ff00] {t('theme_lime_desc')}",
                 f"  [bold yellow][4][/bold yellow] [bold hot_pink]Cyberpunk Neon[/bold hot_pink] {t('theme_neon_desc')}",
                 f"  [bold yellow][5][/bold yellow] [bold orange3]Retro Amber[/bold orange3] {t('theme_amber_desc')}",
                 ""
@@ -1037,8 +1077,7 @@ def run_settings_menu(config: Dict[str, Any]) -> None:
                 save_config(config)
                 # Re-load config to apply overrides
                 config = load_config()
-                global CURRENT_THEME
-                CURRENT_THEME = selected_theme_key
+                apply_theme(selected_theme_key, config.get("terminal_background", "dark"))
                 
         elif choice == "3":
             clear_screen_completely()

@@ -66,7 +66,7 @@ Files go to `~/goldbeam_exports/`, ready for IGV, the UCSC browser, bedtools and
 - Saliency as `.bedGraph`
 
 ### Personalisation
-- 5 colour themes: Retro Multi Colour, SWAEV Blue (dark or light terminal), SWAEV Lime, Cyberpunk Neon, Retro Amber
+- 5 colour themes: Retro Multi Colour, SWAEV Blue (the default, for dark or light terminals), SWAEV Lime, Cyberpunk Neon, Retro Amber
 - 4 languages: English, Español, Français, Deutsch
 - Full-screen, scrollable contextual help (`?`) for every tool and tab
 
